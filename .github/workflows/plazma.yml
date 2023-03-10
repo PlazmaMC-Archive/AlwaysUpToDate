@@ -170,7 +170,7 @@ jobs:
 
     needs: [check-upstreams]
     runs-on: ${{ needs.check-upstreams.outputs.runner }}
-    if: needs.check-upstreams.outputs.paper != '' needs.check-upstreams.outputs.purpur == ''
+    if: needs.check-upstreams.outputs.paper != '' && needs.check-upstreams.outputs.purpur == ''
   
   upstream-purpur:
     name: Upstream Purpur
