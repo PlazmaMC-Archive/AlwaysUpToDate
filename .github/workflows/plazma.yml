@@ -7,6 +7,8 @@ on:
     - cron: "*/20 * * * *"
 
 env:
+  EDITED_PUFFERFISH: false
+
   OS: ubuntu-latest
 
   MAIN: Plazma
@@ -18,12 +20,22 @@ env:
 
   JDK: 19.0.2+7
   JDK_DIST: temurin
+  JDK_REPO: adoptium/temurin19-binaries
+
+  WRAPPER_REPO: gradle/gradle
+  SHADOW_REPO: johnrengelman/shadow
+
+  PAPERWEIGHT_REPO: PaperMC/Paperweight
+  PAPERCLIP_REPO: PaperMC/Paperclip
+
+  TINY_REPO: FabricMC/tiny-remapper
+  TINY_BUILD_GRADLE: https://raw.githubusercontent.com/FabricMC/tiny-remapper/master/build.gradle
 
   PAPER_REPO: PaperMC/Paper
   PAPER_BRANCH: master
 
   PURPUR_REPO: PurpurMC/Purpur
-  PURPUR_BRANCH: ver/1.19.3
+  PURPUR_BRANCH: ver/1.19.4
 
   PUFFERFISH_REPO: pufferfish-gg/Pufferfish
   PUFFERFISH_BRANCH: ver/1.19
@@ -42,6 +54,140 @@ jobs:
         run: |
           echo "runner=${{ env.OS }}" >> $GITHUB_OUTPUT
 
+  check-dependencies:
+    name: Check Dependencies
+    steps:
+
+      - name: Initialize Variables
+        id: init
+        run: |
+          echo "runner=${{ env.OS }}" >> $GITHUB_OUTPUT
+
+      - name: Checkout ${{ env.MAIN }}
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.MAIN_REPO }}
+          path: ${{ env.MAIN }}
+          ref: ${{ env.MAIN_BRANCH }}
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ env.JDK_DIST }}
+          java-version: ${{ env.JDK }}
+          check-latest: true
+          cache: 'gradle'
+
+      - name: Check JDK Version
+        id: jdk
+        run: |
+          response=$(curl --silent https://api.github.com/repos/${{ env.JDK_REPO }}/releases/latest)
+          echo $response
+          latest=$(echo $response | jq -r ".tag_name" | cut -c 5-)
+          current=$(cat ${{ env.MAIN }}/.github/workflows/build.yml | grep jdk: | cut -d "[" -f 2 | cut -d "]" -f 1)
+          echo "Current: $current, Latest: $latest"
+          printf "\nResponse:\n"
+
+          if [ "$latest" != "$current" ]; then
+            echo "latest=$latest" >> $GITHUB_OUTPUT
+            echo "current=$current" >> $GITHUB_OUTPUT
+            echo "Need Upstream"
+          fi
+      
+      - name: Check Gradle Wrapper Version
+        id: wrapper
+        run: |
+          latest=$(curl --silent https://services.gradle.org/versions/current | jq -r ".version")
+          current=$(cd ${{ env.MAIN }} && ./gradlew -v | grep "^Gradle" | cut -d " " -f 2)
+          echo "Current: $current, Latest: $latest"
+
+          if [ "$latest" != "$current" ]; then
+            echo "latest=$latest" >> $GITHUB_OUTPUT
+            echo "current=$current" >> $GITHUB_OUTPUT
+            echo "Need Upstream"
+          fi
+      
+      - name: Check Gradle Shadow Version
+        id: shadow
+        run: |
+          response=$(curl --silent https://api.github.com/repos/${{ env.SHADOW_REPO }}/releases/latest)
+          echo $response
+          latest=$(echo $response | jq -r ".tag_name")
+          current=$(cat ${{ env.MAIN }}/build.gradle.kts | grep com.github.johnrengelman.shadow | cut -d "\"" -f 4)
+          echo "Current: $current, Latest: $latest"
+          printf "\nResponse:\n"
+
+          if [ "$latest" != "$current" ]; then
+            echo "latest=$latest" >> $GITHUB_OUTPUT
+            echo "current=$current" >> $GITHUB_OUTPUT
+            echo "Need Upstream"
+          fi
+      
+      - name: Check Paperweight Version
+        id: paperweight
+        run: |
+          response=$(curl --silent https://api.github.com/repos/${{ env.PAPERWEIGHT_REPO }}/tags)
+          echo $response
+          latest=$(echo $response | jq -r ".[0].name" | cut -c 2-)
+          current=$(cat ${{ env.MAIN }}/build.gradle.kts | grep io.papermc.paperweight.patcher | cut -d "\"" -f 4)
+          echo "Current: $current, Latest: $latest"
+          printf "\nResponse:\n"
+
+          if [ "$latest" != "$current" ]; then
+            echo "latest=$latest" >> $GITHUB_OUTPUT
+            echo "current=$current" >> $GITHUB_OUTPUT
+            echo "Need Upstream"
+          fi
+      
+      - name: Check Paperclip Version
+        id: paperclip
+        run: |
+          response=$(curl --silent https://api.github.com/repos/${{ env.PAPERCLIP_REPO }}/tags)
+          echo $response
+          latest=$(echo $response | jq -r ".[0].name" | cut -c 2-)
+          current=$(cat ${{ env.MAIN }}/build.gradle.kts | grep io.papermc:paperclip | cut -d "\"" -f 2 | cut -d ":" -f 3)
+          echo "Current: $current, Latest: $latest"
+          printf "\nResponse:\n"
+
+          if [ "$latest" != "$current" ]; then
+            echo "latest=$latest" >> $GITHUB_OUTPUT
+            echo "current=$current" >> $GITHUB_OUTPUT
+            echo "Need Upstream"
+          fi
+      
+      - name: Check Tiny Remapper Version
+        id: tiny
+        run: |
+          latest=$(curl --silent ${{ env.TINY_BUILD_GRADLE }} | grep version | grep = | head -n 1 | cut -d "'" -f 2)
+          current=$(cat ${{ env.MAIN }}/build.gradle.kts | grep net.fabricmc:tiny-remapper | cut -d ":" -f 3)
+          echo "Current: $current, Latest: $latest"
+
+          if [ "$latest" != "$current" ]; then
+            echo "latest=$latest" >> $GITHUB_OUTPUT
+            echo "current=$current" >> $GITHUB_OUTPUT
+            echo "Need Upstream"
+          fi
+
+    needs: setup
+    runs-on: ${{ needs.setup.outputs.runner }}
+    outputs:
+      runner: ${{ steps.init.outputs.runner }}
+
+      jdk: ${{ steps.jdk.outputs.latest }}
+      wrapper: ${{ steps.wrapper.outputs.latest }}
+      shadow: ${{ steps.shadow.outputs.latest }}
+      paperweight: ${{ steps.paperweight.outputs.latest }}
+      paperclip: ${{ steps.paperclip.outputs.latest }}
+      tiny: ${{ steps.tiny.outputs.latest }}
+
+      jdk_current: ${{ steps.jdk.outputs.current }}
+      wrapper_current: ${{ steps.wrapper.outputs.current }}
+      shadow_current: ${{ steps.shadow.outputs.current }}
+      paperweight_current: ${{ steps.paperweight.outputs.current }}
+      paperclip_current: ${{ steps.paperclip.outputs.current }}
+      tiny_current: ${{ steps.tiny.outputs.current }}
+
   check-upstreams:
     name: Check Upstreams
     steps:
@@ -50,6 +196,7 @@ jobs:
         id: init
         run: |
           echo "runner=${{ env.OS }}" >> $GITHUB_OUTPUT
+          echo "edited_pufferfish=${{ env.EDITED_PUFFERFISH }}" >> $GITHUB_OUTPUT
 
       - name: Checkout ${{ env.MAIN }}
         uses: actions/checkout@v3
@@ -112,12 +259,125 @@ jobs:
     runs-on: ${{ needs.setup.outputs.runner }}
     outputs:
       runner: ${{ steps.init.outputs.runner }}
+      edited_pufferfish: ${{ steps.init.outputs.edited_pufferfish }}
 
       paper: ${{ steps.paper.outputs.latest }}
+      pufferfish: ${{ steps.pufferfish.outputs.latest }}
       purpur: ${{ steps.purpur.outputs.latest }}
 
       paper_current: ${{ steps.paper.outputs.current }}
+      pufferfish_current: ${{ steps.pufferfish.outputs.current }}
       purpur_current: ${{ steps.purpur.outputs.current }}
+  
+  update-dependencies:
+    name: Update Dependencies
+    steps:
+
+      - name: Checkout ${{ env.MAIN }}
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.MAIN_REPO }}
+          path: ${{ env.MAIN }}
+          ref: ${{ env.MAIN_BRANCH }}
+          token: ${{ secrets.GH_PAT }}
+      
+      - name: Setup Java
+        if: needs.check-dependencies.outputs.wrapper != ''
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ env.JDK_DIST }}
+          java-version: ${{ env.JDK }}
+          check-latest: true
+          cache: 'gradle'
+
+      - name: Update JDK
+        if: needs.check-dependencies.outputs.jdk != ''
+        run: |
+          echo "TODO"
+
+      - name: Update Gradle Wrapper
+        if: needs.check-dependencies.outputs.wrapper != ''
+        run: |
+          cd ${{ env.MAIN }} && ./gradlew wrapper --gradle-version=${{ needs.check-dependencies.outputs.wrapper }}
+
+      - name: Update Gradle Shadow
+        if: needs.check-dependencies.outputs.shadow != '' && needs.check-dependencies.outputs.shadow != 'null'
+        run: |
+          sed -i 's/id("com.github.johnrengelman.shadow") version ".*"/id("com.github.johnrengelman.shadow") version "${{ needs.check-dependencies.outputs.shadow }}"/' ${{ env.MAIN }}/build.gradle.kts
+      
+      - name: Update Paperweight
+        if: needs.check-dependencies.outputs.paperweight != ''
+        run: |
+          sed -i 's/id("io.papermc.paperweight.patcher") version ".*"/id("io.papermc.paperweight.patcher") version "${{ needs.check-dependencies.outputs.paperweight }}"/' ${{ env.MAIN }}/build.gradle.kts
+
+      - name: Update Paperclip
+        if: needs.check-dependencies.outputs.paperclip != ''
+        run: |
+          sed -i 's/paperclip("io.papermc:paperclip:.*")/paperclip("io.papermc:paperclip:${{ needs.check-dependencies.outputs.paperclip }}")/' ${{ env.MAIN }}/build.gradle.kts
+      
+      - name: Update Tiny Remapper
+        if: needs.check-dependencies.outputs.tiny != ''
+        run: |
+          sed -i 's/remapper("net.fabricmc:tiny-remapper:.*:fat")/remapper("net.fabricmc:tiny-remapper:${{ needs.check-dependencies.outputs.tiny }}:fat")/' ${{ env.MAIN }}/build.gradle.kts
+      
+      - name: Commit Changes
+        run: |
+          cd ${{ env.MAIN }}
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]"
+
+          if [ "${{ needs.check-dependencies.outputs.wrapper }}" != '' ]; then
+            echo "Building Gradle Wrapper Changes"
+            upstream="Wrapper"
+            if [ "$`echo . | cut -d "." -f 2`" == "$`echo ${{ needs.check-dependencies.outputs.wrapper }} | cut -d "." -f 3`" ]; then latest="v${{ needs.check-dependencies.outputs.wrapper }}.0"; else latest="v${{ needs.check-dependencies.outputs.wrapper }}"; fi
+            if [ "$`echo . | cut -d "." -f 2`" == "$`echo ${{ needs.check-dependencies.outputs.wrapper_current }} | cut -d "." -f 3`" ]; then current="v${{ needs.check-dependencies.outputs.wrapper_current }}.0"; else current="v${{ needs.check-dependencies.outputs.wrapper_current }}"; fi
+            response=$(curl --silent https://api.github.com/repos/${{ env.WRAPPER_REPO }}/compare/$current...$latest)
+            printf "\nGradle Wrapper Changes:\n"
+            echo $response
+            desc=$(echo $response | jq -r '.commits[] | "${{ env.WRAPPER_REPO }}@\(.sha[:7]) \(.commit.message | split("\r\n")[0] | split("\n")[0])"')
+            commit="$commit\n\nWrapper Changes:\n$desc"
+          fi
+
+          if [ "${{ needs.check-dependencies.outputs.shadow }}" != '' ]; then
+            if [ "${{ needs.check-dependencies.outputs.shadow }}" != 'null' ]; then
+              echo "Building Gradle Shadow Changes"
+              upstream="Shadow"
+              response=$(curl --silent https://api.github.com/repos/${{ env.SHADOW_REPO }}/compare/${{ needs.check-dependencies.outputs.shadow_current }}...${{ needs.check-dependencies.outputs.shadow }})
+              printf "\nGradle Shadow Changes:\n"
+              echo $response
+              desc=$(echo $response | jq -r '.commits[] | "${{ env.SHADOW_REPO }}@\(.sha[:7]) \(.commit.message | split("\r\n")[0] | split("\n")[0])"')
+              commit="$commit\n\nShadow Changes:\n$desc"
+            fi
+          fi
+
+          if [ "${{ needs.check-dependencies.outputs.paperweight }}" != '' ]; then
+            echo "Building Paperweight Changes"
+            upstream="Paperweight"
+            response=$(curl --silent https://api.github.com/repos/${{ env.PAPERWEIGHT_REPO }}/compare/v${{ needs.check-dependencies.outputs.paperweight_current }}...v${{ needs.check-dependencies.outputs.paperweight }})
+            printf "\nPaperweight Changes:\n"
+            echo $response
+            desc=$(echo $response | jq -r '.commits[] | "${{ env.PAPERWEIGHT_REPO }}@\(.sha[:7]) \(.commit.message | split("\r\n")[0] | split("\n")[0])"')
+            commit="$commit\n\nPaperweight Changes:\n$desc"
+          fi
+
+          if [ "${{ needs.check-dependencies.outputs.paperclip }}" != '' ]; then
+            echo "Building Paperclip Changes"
+            upstream="Paperclip"
+            response=$(curl --silent https://api.github.com/repos/${{ env.PAPERCLIP_REPO }}/compare/v${{ needs.check-dependencies.outputs.paperclip_current }}...v${{ needs.check-dependencies.outputs.paperclip }})
+            printf "\nPaperclip Changes:\n"
+            echo $response
+            desc=$(echo $response | jq -r '.commits[] | "${{ env.PAPERCLIP_REPO }}@\(.sha[:7]) \(.commit.message | split("\r\n")[0] | split("\n")[0])"')
+            commit="$commit\n\nPaperclip Changes:\n$desc"
+          fi
+
+          git add .
+          printf "[CI-Skip] Updated Dependencies ($upstream)\n\nDependency has released updates that appear to apply and compile correctly$commit" | git commit -F -
+          git fetch
+          git pull origin ${{ env.MAIN_BRANCH }}
+          git push origin ${{ env.MAIN_BRANCH }}
+
+    needs: [check-dependencies]
+    runs-on: ${{ needs.check-dependencies.outputs.runner }}
+    if: needs.check-dependencies.outputs.wrapper != '' || (needs.check-dependencies.outputs.shadow != '' && needs.check-dependencies.outputs.shadow != 'null') || needs.check-dependencies.outputs.paperweight != '' || needs.check-dependencies.outputs.paperclip != '' || needs.check-dependencies.outputs.tiny != '' # || needs.check-dependencies.outputs.jdk != 
   
   upstream-paper:
     name: Upstream Paper
@@ -170,10 +430,310 @@ jobs:
 
     needs: [check-upstreams]
     runs-on: ${{ needs.check-upstreams.outputs.runner }}
-    if: needs.check-upstreams.outputs.paper != '' && needs.check-upstreams.outputs.purpur == ''
+    if: needs.check-upstreams.outputs.paper != '' && needs.check-upstreams.outputs.pufferfish == '' && needs.check-upstreams.outputs.purpur == ''
+
+  upstream-pufferfish:
+    name: Upstream Pufferfish
+    steps:
+
+      - name: Checkout ${{ env.MAIN }}
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.MAIN_REPO }}
+          path: ${{ env.MAIN }}
+          ref: ${{ env.MAIN_BRANCH }}
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Checkout Pufferfish
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.PUFFERFISH_REPO }}
+          path: Pufferfish
+          ref: ${{ env.PUFFERFISH_BRANCH }}
+      
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ env.JDK_DIST }}
+          java-version: ${{ env.JDK }}
+          check-latest: true
+          cache: 'gradle'
+
+      - name: Configure Git
+        run: |
+          git config --global user.email ${{ env.GIT_EMAIL }} && git config --global user.name ${{ env.GIT_NAME }}
+          echo "paper=$sha" >> $GITHUB_OUTPUT
+
+      - name: Initial Sources
+        id: init
+        run: |
+          sha=$(curl --silent https://api.github.com/repos/${{ env.PAPER_REPO }}/commits?sha=${{ env.PAPER_BRANCH }} | jq -r ".[0].sha")
+          cd Pufferfish/
+          pufferfish=$(git log -1 --pretty=oneline | cut -c 1-40) && echo "pufferfish=$pufferfish" >> $GITHUB_OUTPUT
+          sed -i 's/paperRef=.*/paperRef='"$sha"'/' gradle.properties
+          ./gradlew applyPatches --stacktrace
+
+      - name: Copy Sources
+        run: |
+          sed -i 's/pufferfishCommit = .*/pufferfishCommit = '"${{ steps.init.outputs.pufferfish }}"'/' ${{ env.MAIN }}/.upstream-data
+          cd Pufferfish/.gradle/caches/paperweight/upstreams/paper/Paper-Server
+          cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
+          git add .
+          git commit -m "Sources"
+      
+      - name: Pufferfish Server Changes
+        run: |
+          cd Pufferfish/pufferfish-server/
+          rm -rf .git
+          cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
+          mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-Server/.git ./
+          git add .
+          printf "Pufferfish Server Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
+
+      - name: Pufferfish API Changes
+        run: |
+          cd Pufferfish/pufferfish-api
+          rm -rf .git
+          mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-API/.git ./
+          git add .
+          printf "Pufferfish API Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
+
+      - name: Build Patches
+        run: |
+          cd Pufferfish/
+          ./gradlew rebuildPatches
+          cp -rf patches/api/*-Pufferfish-API-Changes.patch ../${{ env.MAIN }}/patches/api/0001-Pufferfish-API-Changes.patch
+          cp -rf patches/server/*-Pufferfish-Server-Changes.patch ../${{ env.MAIN }}/patches/server/0001-Pufferfish-Server-Changes.patch
+
+      - name: Rebuild Patches
+        run: |
+          cd ${{ env.MAIN }}/
+          if [ "${{ needs.check-upstreams.outputs.paper }}" != '' ]; then
+            sed -i 's/paperCommit = .*/paperCommit = '"${{ needs.check-upstreams.outputs.paper }}"'/' gradle.properties
+          fi
+          cat gradle.properties | grep paperCommit
+          ./gradlew applyPatches --stacktrace
+          ./gradlew rebuildPatches
+
+      - name: Commit changes
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]"
+
+          cd ${{ env.MAIN }}/
+
+          if [ "${{ needs.check-upstreams.outputs.paper }}" != '' ]; then
+            upstream="Paper"
+            response=$(curl --silent -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ env.PAPER_REPO }}/compare/${{ needs.check-upstreams.outputs.paper_current }}...${{ needs.check-upstreams.outputs.paper }})
+            printf "\nPaper Changes:\n"
+            echo $response
+            desc=$(echo $response | jq -r '.commits[] | "${{ env.PAPER_REPO }}@\(.sha[:7]) \(.commit.message | split("\r\n")[0] | split("\n")[0])"')
+            commit="$commit\n\nPaper Changes:\n$desc"
+          fi
+          
+          if [ "$upstream" != "" ]; then upstream="$upstream & Pufferfish"; else upstream="Pufferfish"; fi
+          response=$(curl --silent -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ env.PUFFERFISH_REPO }}/compare/${{ needs.check-upstreams.outputs.pufferfish_current }}...${{ steps.init.outputs.pufferfish }})
+          printf "\nPufferfish Changes:\n"
+          echo $response
+          desc=$(echo $response | jq -r '.commits[] | "${{ env.PUFFERFISH_REPO }}@\(.sha[:7]) \(.commit.message | split("\r\n")[0] | split("\n")[0])"')
+          commit="$commit\n\nPufferfish Changes:\n$desc"
+
+          git add .
+          printf "Updated Upstream ($upstream)\n\nUpstream has released updates that appear to apply and compile correctly$commit" | git commit -F -
+          git fetch
+          git pull origin ${{ env.MAIN_BRANCH }}
+          git push origin ${{ env.MAIN_BRANCH }}
+      
+      - name: Upload Patches
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.MAIN }}-patches
+          path: ${{ env.MAIN }}/patches
+
+    needs: [check-upstreams]
+    runs-on: ${{ needs.check-upstreams.outputs.runner }}
+    if: needs.check-upstreams.outputs.pufferfish != '' && needs.check-upstreams.outputs.purpur == '' && needs.check-upstreams.outputs.edited_pufferfish != 'true'
   
   upstream-purpur:
     name: Upstream Purpur
+    steps:
+
+      - name: Checkout ${{ env.MAIN }}
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.MAIN_REPO }}
+          path: ${{ env.MAIN }}
+          ref: ${{ env.MAIN_BRANCH }}
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Checkout Pufferfish
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.PUFFERFISH_REPO }}
+          path: Pufferfish
+          ref: ${{ env.PUFFERFISH_BRANCH }}
+
+      - name: Checkout Purpur
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.PURPUR_REPO }}
+          path: Purpur
+          ref: ${{ env.PURPUR_BRANCH }}
+      
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ env.JDK_DIST }}
+          java-version: ${{ env.JDK }}
+          check-latest: true
+          cache: 'gradle'
+
+      - name: Configure Git
+        run: git config --global user.email ${{ env.GIT_EMAIL }} && git config --global user.name ${{ env.GIT_NAME }}
+
+      - name: Initial Sources
+        id: init
+        run: |
+          cd Pufferfish/
+          sha=$(curl --silent https://api.github.com/repos/${{ env.PAPER_REPO }}/commits?sha=${{ env.PAPER_BRANCH }} | jq -r ".[0].sha") && echo "paper=$sha" >> $GITHUB_OUTPUT
+          pufferfish=$(git log -1 --pretty=oneline | cut -c 1-40) && echo "pufferfish=$pufferfish" >> $GITHUB_OUTPUT
+          sed -i 's/paperRef=.*/paperRef='"$sha"'/' gradle.properties
+          ./gradlew applyPatches --stacktrace
+
+      - name: Copy Sources
+        run: |
+          sed -i 's/pufferfishCommit = .*/pufferfishCommit = '"${{ steps.init.outputs.pufferfish }}"'/' ${{ env.MAIN }}/.upstream-data
+          cd Pufferfish/.gradle/caches/paperweight/upstreams/paper/Paper-Server
+          cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
+          git add .
+          git commit -m "Sources"
+      
+      - name: Pufferfish Server Changes
+        run: |
+          cd Pufferfish/pufferfish-server/
+          rm -rf .git
+          cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
+          mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-Server/.git ./
+          git add .
+          printf "Pufferfish Server Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
+
+      - name: Pufferfish API Changes
+        run: |
+          cd Pufferfish/pufferfish-api
+          rm -rf .git
+          mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-API/.git ./
+          git add .
+          printf "Pufferfish API Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
+
+      - name: Build Pufferfish Patches
+        run: |
+          cd Pufferfish/
+          ./gradlew rebuildPatches
+
+      - name: Initial Purpur Sources
+        id: init_purpur
+        run: |
+          cd Purpur/
+          purpur=$(git log -1 --pretty=oneline | cut -c 1-40) && echo "purpur=$purpur" >> $GITHUB_OUTPUT
+          sed -i 's/paperCommit = .*/paperCommit = '"${{ steps.init.outputs.paper }}"'/' gradle.properties
+          cp -rf ../Pufferfish/patches/api/*-Pufferfish-API-Changes.patch patches/api/0001-Pufferfish-API-Changes.patch
+          cp -rf ../Pufferfish/patches/server/*-Pufferfish-Server-Changes.patch patches/server/0001-Pufferfish-Server-Changes.patch
+          ./gradlew applyPatches
+      
+      - name: Upload Purpur Patches
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: purpur-patches
+          path: Purpur/patches
+
+      - name: Purpur Server Changes
+        run: |
+          sed -i 's/purpurCommit = .*/purpurCommit = '"${{ steps.init_purpur.outputs.purpur }}"'/' ${{ env.MAIN }}/.upstream-data
+          cd Purpur/Purpur-Server/
+          rm -rf .git
+          cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
+          mv -f ../../Pufferfish/pufferfish-server/.git ./
+          git add .
+          printf "Purpur Server Changes\n\nOriginal: PurpurMC\nCopyright (C) 2023 PurpurMC\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE." | git commit -F -
+
+      - name: Purpur API Changes
+        run: |
+          cd Purpur/Purpur-API/
+          rm -rf .git
+          mv -f ../../Pufferfish/pufferfish-api/.git ./
+          git add .
+          printf "Purpur API Changes\n\nOriginal: PurpurMC\nCopyright (C) 2023 PurpurMC\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE." | git commit -F -
+
+      - name: Build Patches
+        run: |
+          cd Purpur/
+          ./gradlew rebuildPatches
+          cp -rf patches/api/*-Pufferfish-API-Changes.patch ../${{ env.MAIN }}/patches/api/0001-Pufferfish-API-Changes.patch
+          cp -rf patches/server/*-Pufferfish-Server-Changes.patch ../${{ env.MAIN }}/patches/server/0001-Pufferfish-Server-Changes.patch
+          cp -rf patches/api/*-Purpur-API-Changes.patch ../${{ env.MAIN }}/patches/api/0002-Purpur-API-Changes.patch
+          cp -rf patches/server/*-Purpur-Server-Changes.patch ../${{ env.MAIN }}/patches/server/0002-Purpur-Server-Changes.patch
+
+      - name: Rebuild Patches
+        run: |
+          cd ${{ env.MAIN }}/
+          if [ "${{ needs.check-upstreams.outputs.paper }}" != '' ]; then
+            sed -i 's/paperCommit = .*/paperCommit = '"${{ needs.check-upstreams.outputs.paper }}"'/' gradle.properties
+          fi
+          cat gradle.properties | grep paperCommit
+          ./gradlew applyPatches --stacktrace
+          ./gradlew rebuildPatches
+
+      - name: Commit changes
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]"
+
+          cd ${{ env.MAIN }}/
+
+          if [ "${{ needs.check-upstreams.outputs.paper }}" != '' ]; then
+            upstream="Paper"
+            response=$(curl --silent -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ env.PAPER_REPO }}/compare/${{ needs.check-upstreams.outputs.paper_current }}...${{ needs.check-upstreams.outputs.paper }})
+            printf "\nPaper Changes:\n"
+            echo $response
+            desc=$(echo $response | jq -r '.commits[] | "${{ env.PAPER_REPO }}@\(.sha[:7]) \(.commit.message | split("\r\n")[0] | split("\n")[0])"')
+            commit="$commit\n\nPaper Changes:\n$desc"
+          fi
+          
+          if [ "${{ needs.check-upstreams.outputs.pufferfish }}" != '' ]; then
+            if [ "$upstream" != "" ]; then upstream="$upstream & Pufferfish"; else upstream="Pufferfish"; fi
+            response=$(curl --silent -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ env.PUFFERFISH_REPO }}/compare/${{ needs.check-upstreams.outputs.pufferfish_current }}...${{ steps.init.outputs.pufferfish }})
+            printf "\nPufferfish Changes:\n"
+            echo $response
+            desc=$(echo $response | jq -r '.commits[] | "${{ env.PUFFERFISH_REPO }}@\(.sha[:7]) \(.commit.message | split("\r\n")[0] | split("\n")[0])"')
+            commit="$commit\n\nPufferfish Changes:\n$desc"
+          fi
+
+          if [ "$upstream" != "" ]; then upstream="$upstream & Purpur"; else upstream="Purpur"; fi
+          response=$(curl --silent -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ env.PURPUR_REPO }}/compare/${{ needs.check-upstreams.outputs.purpur_current }}...${{ steps.init_purpur.outputs.purpur }})
+          printf "\nPurpur Changes:\n"
+          echo $response
+          desc=$(echo $response | jq -r '.commits[] | "${{ env.PURPUR_REPO }}@\(.sha[:7]) \(.commit.message | split("\r\n")[0] | split("\n")[0])"')
+          commit="$commit\n\nPurpur Changes:\n$desc"
+
+          git add .
+          printf "Updated Upstream ($upstream)\n\nUpstream has released updates that appear to apply and compile correctly$commit" | git commit -F -
+          git fetch
+          git pull origin ${{ env.MAIN_BRANCH }}
+          git push origin ${{ env.MAIN_BRANCH }}
+      
+      - name: Upload ${{ env.MAIN }} Patches
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.MAIN }}-patches
+          path: ${{ env.MAIN }}/patches
+
+    needs: [check-upstreams]
+    runs-on: ${{ needs.check-upstreams.outputs.runner }}
+    if: needs.check-upstreams.outputs.purpur != '' && needs.check-upstreams.outputs.edited_pufferfish != 'true'
+  
+  upstream-purpur-edited:
+    name: Upstream Purpur (Edited)
     steps:
 
       - name: Checkout ${{ env.MAIN }}
@@ -349,4 +909,4 @@ jobs:
 
     needs: [check-upstreams]
     runs-on: ${{ needs.check-upstreams.outputs.runner }}
-    if: needs.check-upstreams.outputs.purpur != ''
+    if: needs.check-upstreams.outputs.purpur != '' && needs.check-upstreams.outputs.edited_pufferfish == 'true'
