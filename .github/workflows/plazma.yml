@@ -1,4 +1,4 @@
-name: Scheduled Upstream (Plazma/1.19.3)
+name: Scheduled Upstream (Plazma/1.19.4)
 
 on:
   push:
@@ -11,12 +11,12 @@ env:
 
   MAIN: Plazma
   MAIN_REPO: PlazmaMC/Plazma
-  MAIN_BRANCH: ver/1.19.3
+  MAIN_BRANCH: ver/1.19.4
 
   GIT_EMAIL: dev@alpha93.kr
   GIT_NAME: AlphaKR93
 
-  JDK: 19.0.1+10
+  JDK: 19.0.2+7
   JDK_DIST: temurin
 
   PAPER_REPO: PaperMC/Paper
