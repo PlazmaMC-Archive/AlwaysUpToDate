@@ -7,9 +7,7 @@ on:
     - cron: "*/20 * * * *"
 
 env:
-  EDITED_PUFFERFISH: false
-
-  OS: ubuntu-latest
+  OS: ubuntu-22.04
 
   MAIN: Plazma
   MAIN_REPO: PlazmaMC/Plazma
@@ -18,9 +16,8 @@ env:
   GIT_EMAIL: dev@alpha93.kr
   GIT_NAME: AlphaKR93
 
-  JDK: 19.0.2+7
-  JDK_DIST: temurin
-  JDK_REPO: adoptium/temurin19-binaries
+  JDK: 19
+  GRAAL: latest
 
   WRAPPER_REPO: gradle/gradle
   SHADOW_REPO: johnrengelman/shadow
@@ -39,6 +36,7 @@ env:
 
   PUFFERFISH_REPO: pufferfish-gg/Pufferfish
   PUFFERFISH_BRANCH: ver/1.19
+  PUFFERFISH_CUSTOM: false
 
 jobs:
 
@@ -71,29 +69,13 @@ jobs:
           ref: ${{ env.MAIN_BRANCH }}
           token: ${{ secrets.GH_PAT }}
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
         with:
-          distribution: ${{ env.JDK_DIST }}
+          github-token: ${{ secrets.GH_PAT }}
           java-version: ${{ env.JDK }}
-          check-latest: true
+          version: ${{ env.GRAAL }}
           cache: 'gradle'
-
-      - name: Check JDK Version
-        id: jdk
-        run: |
-          response=$(curl --silent https://api.github.com/repos/${{ env.JDK_REPO }}/releases/latest)
-          echo $response
-          latest=$(echo $response | jq -r ".tag_name" | cut -c 5-)
-          current=$(cat ${{ env.MAIN }}/.github/workflows/build.yml | grep jdk: | cut -d "[" -f 2 | cut -d "]" -f 1)
-          echo "Current: $current, Latest: $latest"
-          printf "\nResponse:\n"
-
-          if [ "$latest" != "$current" ]; then
-            echo "latest=$latest" >> $GITHUB_OUTPUT
-            echo "current=$current" >> $GITHUB_OUTPUT
-            echo "Need Upstream"
-          fi
       
       - name: Check Gradle Wrapper Version
         id: wrapper
@@ -174,14 +156,12 @@ jobs:
     outputs:
       runner: ${{ steps.init.outputs.runner }}
 
-      jdk: ${{ steps.jdk.outputs.latest }}
       wrapper: ${{ steps.wrapper.outputs.latest }}
       shadow: ${{ steps.shadow.outputs.latest }}
       paperweight: ${{ steps.paperweight.outputs.latest }}
       paperclip: ${{ steps.paperclip.outputs.latest }}
       tiny: ${{ steps.tiny.outputs.latest }}
 
-      jdk_current: ${{ steps.jdk.outputs.current }}
       wrapper_current: ${{ steps.wrapper.outputs.current }}
       shadow_current: ${{ steps.shadow.outputs.current }}
       paperweight_current: ${{ steps.paperweight.outputs.current }}
@@ -196,7 +176,7 @@ jobs:
         id: init
         run: |
           echo "runner=${{ env.OS }}" >> $GITHUB_OUTPUT
-          echo "edited_pufferfish=${{ env.EDITED_PUFFERFISH }}" >> $GITHUB_OUTPUT
+          echo "PUFFERFISH_CUSTOM=${{ env.PUFFERFISH_CUSTOM }}" >> $GITHUB_OUTPUT
 
       - name: Checkout ${{ env.MAIN }}
         uses: actions/checkout@v3
@@ -223,7 +203,7 @@ jobs:
           fi
 
       - name: Check Pufferfish Commit
-        if: env.EDITED_PUFFERFISH != 'true'
+        if: env.PUFFERFISH_CUSTOM != 'true'
         id: pufferfish
         run: |
           response=$(curl --silent https://api.github.com/repos/${{ env.PUFFERFISH_REPO }}/commits?sha=${{ env.PUFFERFISH_BRANCH }})
@@ -259,7 +239,7 @@ jobs:
     runs-on: ${{ needs.setup.outputs.runner }}
     outputs:
       runner: ${{ steps.init.outputs.runner }}
-      edited_pufferfish: ${{ steps.init.outputs.edited_pufferfish }}
+      PUFFERFISH_CUSTOM: ${{ steps.init.outputs.PUFFERFISH_CUSTOM }}
 
       paper: ${{ steps.paper.outputs.latest }}
       pufferfish: ${{ steps.pufferfish.outputs.latest }}
@@ -280,20 +260,14 @@ jobs:
           path: ${{ env.MAIN }}
           ref: ${{ env.MAIN_BRANCH }}
           token: ${{ secrets.GH_PAT }}
-      
-      - name: Setup Java
-        if: needs.check-dependencies.outputs.wrapper != ''
-        uses: actions/setup-java@v3
-        with:
-          distribution: ${{ env.JDK_DIST }}
-          java-version: ${{ env.JDK }}
-          check-latest: true
-          cache: 'gradle'
 
-      - name: Update JDK
-        if: needs.check-dependencies.outputs.jdk != ''
-        run: |
-          echo "TODO"
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          java-version: ${{ env.JDK }}
+          version: ${{ env.GRAAL }}
+          cache: 'gradle'
 
       - name: Update Gradle Wrapper
         if: needs.check-dependencies.outputs.wrapper != ''
@@ -390,13 +364,13 @@ jobs:
           path: ${{ env.MAIN }}
           ref: ${{ env.MAIN_BRANCH }}
           token: ${{ secrets.GH_PAT }}
-      
-      - name: Setup Java
-        uses: actions/setup-java@v3
+
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
         with:
-          distribution: ${{ env.JDK_DIST }}
+          github-token: ${{ secrets.GH_PAT }}
           java-version: ${{ env.JDK }}
-          check-latest: true
+          version: ${{ env.GRAAL }}
           cache: 'gradle'
 
       - name: Configure Git
@@ -405,9 +379,7 @@ jobs:
       - name: Update Upstream
         run: |
           cd ${{ env.MAIN }}
-          sed -i 's/paperCommit = .*/paperCommit = '"${{ needs.check-upstreams.outputs.paper }}"'/' gradle.properties
-          cat gradle.properties | grep paperCommit
-          ./gradlew applyPatches --stacktrace
+          ./gradlew updateUpstream --stacktrace
       
       - name: Rebuild ${{ env.MAIN }}
         run: | 
@@ -451,12 +423,12 @@ jobs:
           path: Pufferfish
           ref: ${{ env.PUFFERFISH_BRANCH }}
       
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
         with:
-          distribution: ${{ env.JDK_DIST }}
+          github-token: ${{ secrets.GH_PAT }}
           java-version: ${{ env.JDK }}
-          check-latest: true
+          version: ${{ env.GRAAL }}
           cache: 'gradle'
 
       - name: Configure Git
@@ -508,12 +480,8 @@ jobs:
       - name: Rebuild Patches
         run: |
           cd ${{ env.MAIN }}/
-          if [ "${{ needs.check-upstreams.outputs.paper }}" != '' ]; then
-            sed -i 's/paperCommit = .*/paperCommit = '"${{ needs.check-upstreams.outputs.paper }}"'/' gradle.properties
-          fi
-          cat gradle.properties | grep paperCommit
-          ./gradlew applyPatches --stacktrace
-          ./gradlew rebuildPatches
+          ./gradlew updateUpstream --stacktrace
+          ./gradlew rebuildPatches --stacktrace
 
       - name: Commit changes
         run: |
@@ -552,7 +520,7 @@ jobs:
 
     needs: [check-upstreams]
     runs-on: ${{ needs.check-upstreams.outputs.runner }}
-    if: needs.check-upstreams.outputs.pufferfish != '' && needs.check-upstreams.outputs.purpur == '' && needs.check-upstreams.outputs.edited_pufferfish != 'true'
+    if: needs.check-upstreams.outputs.pufferfish != '' && needs.check-upstreams.outputs.purpur == '' && needs.check-upstreams.outputs.PUFFERFISH_CUSTOM != 'true'
   
   upstream-purpur:
     name: Upstream Purpur
@@ -580,12 +548,12 @@ jobs:
           path: Purpur
           ref: ${{ env.PURPUR_BRANCH }}
       
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
         with:
-          distribution: ${{ env.JDK_DIST }}
+          github-token: ${{ secrets.GH_PAT }}
           java-version: ${{ env.JDK }}
-          check-latest: true
+          version: ${{ env.GRAAL }}
           cache: 'gradle'
 
       - name: Configure Git
@@ -677,12 +645,8 @@ jobs:
       - name: Rebuild Patches
         run: |
           cd ${{ env.MAIN }}/
-          if [ "${{ needs.check-upstreams.outputs.paper }}" != '' ]; then
-            sed -i 's/paperCommit = .*/paperCommit = '"${{ needs.check-upstreams.outputs.paper }}"'/' gradle.properties
-          fi
-          cat gradle.properties | grep paperCommit
-          ./gradlew applyPatches --stacktrace
-          ./gradlew rebuildPatches
+          ./gradlew updateUpstream --stacktrace
+          ./gradlew rebuildPatches --stacktrace
 
       - name: Commit changes
         run: |
@@ -730,7 +694,7 @@ jobs:
 
     needs: [check-upstreams]
     runs-on: ${{ needs.check-upstreams.outputs.runner }}
-    if: needs.check-upstreams.outputs.purpur != '' && needs.check-upstreams.outputs.edited_pufferfish != 'true'
+    if: needs.check-upstreams.outputs.purpur != '' && needs.check-upstreams.outputs.PUFFERFISH_CUSTOM != 'true'
   
   upstream-purpur-edited:
     name: Upstream Purpur (Edited)
@@ -758,12 +722,12 @@ jobs:
           path: Purpur
           ref: ${{ env.PURPUR_BRANCH }}
       
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
         with:
-          distribution: ${{ env.JDK_DIST }}
+          github-token: ${{ secrets.GH_PAT }}
           java-version: ${{ env.JDK }}
-          check-latest: true
+          version: ${{ env.GRAAL }}
           cache: 'gradle'
 
       - name: Configure Git
@@ -856,12 +820,8 @@ jobs:
       - name: Rebuild Patches
         run: |
           cd ${{ env.MAIN }}/
-          if [ "${{ needs.check-upstreams.outputs.paper }}" != '' ]; then
-            sed -i 's/paperCommit = .*/paperCommit = '"${{ needs.check-upstreams.outputs.paper }}"'/' gradle.properties
-          fi
-          cat gradle.properties | grep paperCommit
-          ./gradlew applyPatches --stacktrace
-          ./gradlew rebuildPatches
+          ./gradlew updateUpstream --stacktrace
+          ./gradlew rebuildPatches --stacktrace
 
       - name: Commit changes
         run: |
@@ -909,4 +869,4 @@ jobs:
 
     needs: [check-upstreams]
     runs-on: ${{ needs.check-upstreams.outputs.runner }}
-    if: needs.check-upstreams.outputs.purpur != '' && needs.check-upstreams.outputs.edited_pufferfish == 'true'
+    if: needs.check-upstreams.outputs.purpur != '' && needs.check-upstreams.outputs.PUFFERFISH_CUSTOM == 'true'
