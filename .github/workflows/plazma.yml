@@ -112,7 +112,7 @@ jobs:
           response=$(curl --silent https://api.github.com/repos/${{ env.PAPERWEIGHT_REPO }}/tags)
           echo $response
           latest=$(echo $response | jq -r ".[0].name" | cut -c 2-)
-          current=$(cat ${{ env.MAIN }}/build.gradle.kts | grep io.papermc.paperweight.patcher | cut -d "\"" -f 4)
+          current=$(cat ${{ env.MAIN }}/build.gradle.kts | grep io.papermc.paperweight.patcher | grep version | cut -d "\"" -f 4)
           echo "Current: $current, Latest: $latest"
           printf "\nResponse:\n"
 
