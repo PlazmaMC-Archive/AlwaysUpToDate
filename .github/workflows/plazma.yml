@@ -36,7 +36,7 @@ env:
 
   PUFFERFISH_REPO: pufferfish-gg/Pufferfish
   PUFFERFISH_BRANCH: ver/1.19
-  PUFFERFISH_CUSTOM: false
+  PUFFERFISH_CUSTOM: true
 
 jobs:
 
