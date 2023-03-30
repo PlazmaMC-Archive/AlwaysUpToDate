@@ -380,11 +380,12 @@ jobs:
         run: |
           cd ${{ env.MAIN }}
           ./gradlew updateUpstream --stacktrace
+          ./gradlew applyPatches --stacktrace
       
       - name: Rebuild ${{ env.MAIN }}
         run: | 
           cd ${{ env.MAIN }}
-          ./gradlew rebuildPatches
+          ./gradlew rebuildPatches --stacktrace
 
       - name: Commit Changes
         run: |
@@ -481,6 +482,7 @@ jobs:
         run: |
           cd ${{ env.MAIN }}/
           ./gradlew updateUpstream --stacktrace
+          ./gradlew applyPatches --stacktrace
           ./gradlew rebuildPatches --stacktrace
 
       - name: Commit changes
@@ -646,6 +648,7 @@ jobs:
         run: |
           cd ${{ env.MAIN }}/
           ./gradlew updateUpstream --stacktrace
+          ./gradlew applyPatches --stacktrace
           ./gradlew rebuildPatches --stacktrace
 
       - name: Commit changes
@@ -821,6 +824,7 @@ jobs:
         run: |
           cd ${{ env.MAIN }}/
           ./gradlew updateUpstream --stacktrace
+          ./gradlew applyPatches --stacktrace
           ./gradlew rebuildPatches --stacktrace
 
       - name: Commit changes
