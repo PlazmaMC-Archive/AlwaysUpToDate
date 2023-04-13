@@ -437,10 +437,9 @@ jobs:
       - name: Initial Sources
         id: init
         run: |
-          sha=$(curl --silent https://api.github.com/repos/${{ env.PAPER_REPO }}/commits?sha=${{ env.PAPER_BRANCH }} | jq -r ".[0].sha")
           cd Pufferfish/
           pufferfish=$(git log -1 --pretty=oneline | cut -c 1-40) && echo "pufferfish=$pufferfish" >> $GITHUB_OUTPUT
-          sed -i 's/paperRef=.*/paperRef='"$sha"'/' gradle.properties
+          sed -i 's/paperRef=.*/paperRef='"${{ env.PAPER_HASH }}"'/' gradle.properties
           ./gradlew applyPatches --stacktrace
 
       - name: Copy Sources
@@ -562,9 +561,8 @@ jobs:
         id: init
         run: |
           cd Pufferfish/
-          sha=$(curl --silent https://api.github.com/repos/${{ env.PAPER_REPO }}/commits?sha=${{ env.PAPER_BRANCH }} | jq -r ".[0].sha") && echo "paper=$sha" >> $GITHUB_OUTPUT
           pufferfish=$(git log -1 --pretty=oneline | cut -c 1-40) && echo "pufferfish=$pufferfish" >> $GITHUB_OUTPUT
-          sed -i 's/paperRef=.*/paperRef='"$sha"'/' gradle.properties
+          sed -i 's/paperRef=.*/paperRef='"${{.env.PAPER_HASH }}"'/' gradle.properties
           ./gradlew applyPatches --stacktrace
 
       - name: Copy Sources
@@ -736,10 +734,9 @@ jobs:
       - name: Initial Sources
         id: init
         run: |
-          sha=$(curl --silent https://api.github.com/repos/${{ env.PAPER_REPO }}/commits?sha=${{ env.PAPER_BRANCH }} | jq -r ".[0].sha") && echo "paper=$sha" >> $GITHUB_OUTPUT
-          cd Pufferfish/
+          \cd Pufferfish/
           pufferfish=$(git log -1 --pretty=oneline | cut -c 1-40) && echo "pufferfish=$pufferfish" >> $GITHUB_OUTPUT
-          sed -i 's/paperRef=.*/paperRef='"$sha"'/' gradle.properties
+          sed -i 's/paperRef=.*/paperRef='"${{ env.PAPER_HASH }}"'/' gradle.properties
           rm -rf patches/server/* patches/api/*
           cp -rf ../Purpur/patches/api/*-Pufferfish-API-Changes.patch patches/api/0001-Pufferfish-API-Changes.patch
           cp -rf ../Purpur/patches/server/*-Pufferfish-Server-Changes.patch patches/server/0001-Pufferfish-Server-Changes.patch
