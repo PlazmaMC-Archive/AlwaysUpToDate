@@ -1,7 +1,6 @@
 name: Scheduled Upstream (Plazma/1.19.4)
 
 on:
-  push:
   workflow_dispatch:
   schedule:
     - cron: "*/20 * * * *"
