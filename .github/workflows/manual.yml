@@ -562,7 +562,7 @@ jobs:
         run: |
           cd Pufferfish/
           pufferfish=$(git log -1 --pretty=oneline | cut -c 1-40) && echo "pufferfish=$pufferfish" >> $GITHUB_OUTPUT
-          sed -i 's/paperRef=.*/paperRef='"${{.env.PAPER_HASH }}"'/' gradle.properties
+          sed -i 's/paperRef=.*/paperRef='"${{ env.PAPER_HASH }}"'/' gradle.properties
           ./gradlew applyPatches --stacktrace
 
       - name: Copy Sources
