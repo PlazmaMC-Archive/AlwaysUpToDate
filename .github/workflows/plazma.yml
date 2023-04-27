@@ -15,7 +15,7 @@ env:
   GIT_EMAIL: dev@alpha93.kr
   GIT_NAME: AlphaKR93
 
-  JDK: 19
+  JDK: 17
   GRAAL: latest
 
   WRAPPER_REPO: gradle/gradle
