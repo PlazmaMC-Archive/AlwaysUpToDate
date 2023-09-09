@@ -297,6 +297,7 @@ jobs:
         run: |
           cd ${{ env.MAIN }}
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]"
+          git config --global pull.rebase true
 
           if [ "${{ needs.check-dependencies.outputs.wrapper }}" != '' ]; then
             echo "Building Gradle Wrapper Changes"
@@ -373,7 +374,7 @@ jobs:
           cache: 'gradle'
 
       - name: Configure Git
-        run: git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]"
+        run: git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]" && git config --global pull.rebase true
 
       - name: Update Upstream
         run: |
@@ -487,6 +488,7 @@ jobs:
       - name: Commit changes
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]"
+          git config --global pull.rebase true
 
           cd ${{ env.MAIN }}/
 
@@ -653,7 +655,7 @@ jobs:
       - name: Commit changes
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]"
-          git config pull.rebase true
+          git config --global pull.rebase true
 
           cd ${{ env.MAIN }}/
 
@@ -830,7 +832,7 @@ jobs:
       - name: Commit changes
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]"
-          git config pull.rebase true
+          git config --global pull.rebase true
 
           cd ${{ env.MAIN }}/
 
