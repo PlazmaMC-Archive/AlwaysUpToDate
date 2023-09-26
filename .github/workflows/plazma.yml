@@ -1,4 +1,4 @@
-name: Scheduled Upstream (Plazma/1.20.1)
+name: Scheduled Upstream (Plazma/1.20.2)
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ env:
 
   MAIN: Plazma
   MAIN_REPO: PlazmaMC/Plazma
-  MAIN_BRANCH: ver/1.20.1
+  MAIN_BRANCH: dev/1.20.2
 
   GIT_EMAIL: dev@alpha93.kr
   GIT_NAME: AlphaKR93
@@ -30,8 +30,8 @@ env:
   PAPER_REPO: PaperMC/Paper
   PAPER_BRANCH: master
 
-  PURPUR_REPO: PurpurMC/Purpur
-  PURPUR_BRANCH: ver/1.20.1
+  PURPUR_REPO: PlazmaMC/Purpur
+  PURPUR_BRANCH: ver/1.20.2
 
   PUFFERFISH_REPO: PlazmaMC/Pufferfish #pufferfish-gg/Pufferfish # TODO: TEMPORARY CHANGE
   PUFFERFISH_BRANCH: ver/1.20
@@ -463,16 +463,18 @@ jobs:
           rm -rf .git
           cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
           mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-Server/.git ./
+          git config user.email "kevin.raneri@gmail.com" && git config user.name "Kevin Raneri"
           git add .
-          printf "Pufferfish Server Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
+          printf "Pufferfish Server Changes\n\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
 
       - name: Pufferfish API Changes
         run: |
           cd Pufferfish/pufferfish-api
           rm -rf .git
           mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-API/.git ./
+          git config user.email "kevin.raneri@gmail.com" && git config user.name "Kevin Raneri"
           git add .
-          printf "Pufferfish API Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
+          printf "Pufferfish API Changes\n\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
 
       - name: Build Patches
         run: |
@@ -588,16 +590,18 @@ jobs:
           rm -rf .git
           cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
           mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-Server/.git ./
+          git config user.email "kevin.raneri@gmail.com" && git config user.name "Kevin Raneri"
           git add .
-          printf "Pufferfish Server Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
+          printf "Pufferfish Server Changes\n\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
 
       - name: Pufferfish API Changes
         run: |
           cd Pufferfish/pufferfish-api
           rm -rf .git
           mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-API/.git ./
+          git config user.email "kevin.raneri@gmail.com" && git config user.name "Kevin Raneri"
           git add .
-          printf "Pufferfish API Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
+          printf "Pufferfish API Changes\n\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
 
       - name: Build Pufferfish Patches
         run: |
@@ -628,6 +632,7 @@ jobs:
           rm -rf .git
           cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
           mv -f ../../Pufferfish/pufferfish-server/.git ./
+          git config user.email "blake.galbreath@gmail.com" && git config user.name "William Blake Galbreath"
           git add .
           printf "Purpur Server Changes\n\nOriginal: PurpurMC\nCopyright (C) 2023 PurpurMC\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE." | git commit -F -
 
@@ -636,6 +641,7 @@ jobs:
           cd Purpur/Purpur-API/
           rm -rf .git
           mv -f ../../Pufferfish/pufferfish-api/.git ./
+          git config user.email "blake.galbreath@gmail.com" && git config user.name "William Blake Galbreath"
           git add .
           printf "Purpur API Changes\n\nOriginal: PurpurMC\nCopyright (C) 2023 PurpurMC\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE." | git commit -F -
 
@@ -767,6 +773,7 @@ jobs:
           rm -rf .git
           cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
           mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-Server/.git ./
+          git config user.email "kevin.raneri@gmail.com" && git config user.name "Kevin Raneri"
           git add .
           printf "Pufferfish Server Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
 
@@ -775,6 +782,7 @@ jobs:
           cd Pufferfish/pufferfish-api
           rm -rf .git
           mv -f ../.gradle/caches/paperweight/upstreams/paper/Paper-API/.git ./
+          git config user.email "kevin.raneri@gmail.com" && git config user.name "Kevin Raneri"
           git add .
           printf "Pufferfish API Changes\n\nOriginal: Kevin Raneri <kevin.raneri@gmail.com>\nCopyright (C) 2023 Pufferfish Studios LLC\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>." | git commit -F -
 
@@ -805,6 +813,7 @@ jobs:
           rm -rf .git
           cp -rf .gradle/caches/paperweight/mc-dev-sources/net/* src/main/java/net
           mv -f ../../Pufferfish/pufferfish-server/.git ./
+          git config user.email "blake.galbreath@gmail.com" && git config user.name "William Blake Galbreath"
           git add .
           printf "Purpur Server Changes\n\nOriginal: PurpurMC\nCopyright (C) 2023 PurpurMC\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE." | git commit -F -
 
@@ -813,6 +822,7 @@ jobs:
           cd Purpur/Purpur-API/
           rm -rf .git
           mv -f ../../Pufferfish/pufferfish-api/.git ./
+          git config user.email "blake.galbreath@gmail.com" && git config user.name "William Blake Galbreath"
           git add .
           printf "Purpur API Changes\n\nOriginal: PurpurMC\nCopyright (C) 2023 PurpurMC\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE." | git commit -F -
 
