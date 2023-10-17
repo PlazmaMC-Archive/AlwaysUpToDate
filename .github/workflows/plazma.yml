@@ -30,10 +30,10 @@ env:
   PAPER_REPO: PaperMC/Paper
   PAPER_BRANCH: master
 
-  PURPUR_REPO: PlazmaMC/Purpur
+  PURPUR_REPO: PurpurMC/Purpur
   PURPUR_BRANCH: ver/1.20.2
 
-  PUFFERFISH_REPO: PlazmaMC/Pufferfish #pufferfish-gg/Pufferfish # TODO: TEMPORARY CHANGE
+  PUFFERFISH_REPO: pufferfish-gg/Pufferfish
   PUFFERFISH_BRANCH: ver/1.20
   PUFFERFISH_CUSTOM: false
 
